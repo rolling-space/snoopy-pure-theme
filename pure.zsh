@@ -26,6 +26,22 @@
 # turns seconds into human readable time
 # 165392 => 1d 21h 56m 32s
 # https://github.com/sindresorhus/pretty-time-zsh
+
+PURE_PROMPT_SYMBOL='❯'
+
+# Characters
+function {
+  local LC_ALL="" LC_CTYPE="en_US.UTF-8"
+  # SEGMENT_SEPARATOR="\ue0b0"
+  SEGMENT_SEPARATOR="|"
+  PLUSMINUS="\u00b1"
+  BRANCH="\ue0a0"
+  DETACHED="\u27a6"
+  CROSS="\u2719"
+  LIGHTNING="\u26a1"
+  GEAR="\u2733"
+}
+
 prompt_pure_human_time_to_var() {
 	local human=" " total_seconds=$1 var=$2
 	local days=$(( total_seconds / 60 / 60 / 24 ))
@@ -104,13 +120,56 @@ prompt_pure_string_length() {
 	echo $(( ${#${(S%%)str//(\%([KF1]|)\{*\}|\%[Bbkf])}} ))
 }
 
-prompt_pure_render_path() {
-	# path
-	pp="%~"
-	preprompt+=("%F{blue}$pp%f")
+prompt_pure_short_pwd() {
+
+  local current_dir="${1:-${PWD}}"
+  local return_dir='~'
+
+  current_dir="${current_dir/#${HOME}/~}"
+
+# if we aren't in ~
+  if [[ ${current_dir} != '~' ]]; then
+    return_dir="${${${${(@j:/:M)${(@s:/:)current_dir}##.#?}:h}%/}//\%/%%}/${${current_dir:t}//\%/%%}"
+  fi
+
+  pp=${return_dir}
+	preprompt+=("%F{blue}$pp")
+
 }
 
+prompt_pure_ruby_info() {
+  rbvrsn="$(rbenv version-name)"
+	preprompt+=("%F{green}$rbvrsn")
+}
+
+prompt_pure_node_info() {
+  ndvrsn="$(nvm current)"
+	preprompt+=("%F{magenta}$ndvrsn")
+}
+
+prompt_pure_super_git_status() {
+	unset __CURRENT_GIT_STATUS
+
+	_S_GIT_STATUS=`git status --porcelain --branch &> /dev/null | $__GIT_PROMPT_DIR/exe/gitstatus`
+
+	__CURRENT_GIT_STATUS=("${(@s: :)_S_GIT_STATUS}")
+	# GIT_BRANCH=$__CURRENT_GIT_STATUS[1]
+	prompt_pure_vcs[sgahead]=$__CURRENT_GIT_STATUS[2]
+	prompt_pure_vcs[sgbehind]=$__CURRENT_GIT_STATUS[3]
+	prompt_pure_vcs[sgstaged]=$__CURRENT_GIT_STATUS[4]
+	prompt_pure_vcs[sgconflicts]=$__CURRENT_GIT_STATUS[5]
+	prompt_pure_vcs[sgchanged]=$__CURRENT_GIT_STATUS[6]
+	prompt_pure_vcs[sguntracked]=$__CURRENT_GIT_STATUS[7]
+
+}
+# prompt_pure_render_path() {
+# 	# path
+# 	pp="%~"
+# 	preprompt+=("%F{blue}$pp%f")
+# }
+
 prompt_pure_render_vcs() {
+	prompt_pure_super_git_status
 	# set color for git branch/dirty status, change color if dirty checking has been delayed
 	if (( ${+prompt_pure_vcs[last_worktree_check]} )); then
 		# cached: violet = 13
@@ -145,15 +204,18 @@ prompt_pure_render_vcs() {
 		# branch and action
 		pp=""
 		[[ -n ${prompt_pure_vcs[action]} ]]  && pp+="${prompt_pure_vcs[action]}: "
-		[[ -n ${+prompt_pure_vcs[branch]} ]] && pp+="${prompt_pure_vcs[branch]}"
+		[[ -n ${+prompt_pure_vcs[branch]} ]] && pp+="${BRANCH} ${prompt_pure_vcs[branch]}"
 
 		# worktree information (appended)
 		if (( ${prompt_pure_vcs[worktree]} )); then
-
-			(( ${prompt_pure_vcs[untracked]} )) && pp+=${PURE_GIT_UNTRACKED:-'.'}
-			(( ${prompt_pure_vcs[dirty]} ))     && pp+=${PURE_GIT_DIRTY:-'*'}
-			(( ${prompt_pure_vcs[staged]} ))    && pp+=${PURE_GIT_STAGED:-'+'}
-			(( ${prompt_pure_vcs[unmerged]} ))  && pp+=${PURE_GIT_UNMERGED:-'!'}
+			pp+=${SEGMENT_SEPARATOR}
+			(( ${prompt_pure_vcs[untracked]} )) && pp+=${PURE_GIT_UNTRACKED:-'…'}
+			(( ${prompt_pure_vcs[sguntracked]} )) && pp+=${prompt_pure_vcs[sguntracked]}
+			(( ${prompt_pure_vcs[dirty]} ))     && pp+="%F{red}${PURE_GIT_DIRTY:-${GEAR}}"
+			(( ${prompt_pure_vcs[sgchanged]} )) && pp+=${prompt_pure_vcs[sgchanged]}
+			(( ${prompt_pure_vcs[staged]} ))    && pp+="%F{green}${PURE_GIT_STAGED:-${CROSS}}"
+			(( ${prompt_pure_vcs[sgstaged]} )) && pp+=${prompt_pure_vcs[sgstaged]}
+			(( ${prompt_pure_vcs[unmerged]} ))  && pp+="${reset_color}${PURE_GIT_UNMERGED:-'!'}"
 
 		elif ! (( ${+prompt_pure_vcs[worktree]} )); then
 
@@ -170,8 +232,10 @@ prompt_pure_render_vcs() {
 
 			pp=""
 			(( ${prompt_pure_vcs[right]} )) && pp+=${PURE_GIT_DOWN_ARROW:-'⇣'}
+			(( ${prompt_pure_vcs[sgbehind]} )) && pp+=${prompt_pure_vcs[sgbehind]}
 			(( ${prompt_pure_vcs[left]} ))  && pp+=${PURE_GIT_UP_ARROW:-'⇡'}
-			(( ${even} ))                   && pp+=${PURE_GIT_EVEN_ARROW:-}
+			(( ${prompt_pure_vcs[sgahead]} )) && pp+=${prompt_pure_vcs[sgahead]}
+			(( ${even} ))                   && pp+=${PURE_GIT_EVEN_ARROW:-'✔'}
 			(( ${prompt_pure_vcs[fetch]:-0} == 0 )) && pp+=${PURE_GIT_FETCH_IN_PROCESS:-'(fetch...)'}
 			(( ${prompt_pure_vcs[fetch]:-0} < 0 ))  && pp+=${PURE_GIT_FETCH_FAILED:-'(fetch!)'}
 			[[ -n $pp ]] && preprompt+=("%F{$clr_upstream}$pp%f")
@@ -742,7 +806,8 @@ prompt_pure_setup() {
 	# a prompt rendering callback should append to the preprompt=() array
 	# declared in a parent scope
 	prompt_pure_pieces=(
-		prompt_pure_render_path
+		prompt_pure_short_pwd
+		prompt_pure_ruby_info
 		prompt_pure_render_vcs
 		prompt_pure_render_hostname
 		prompt_pure_render_exec_time
