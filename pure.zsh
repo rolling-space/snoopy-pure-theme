@@ -143,8 +143,10 @@ prompt_pure_ruby_info() {
 }
 
 prompt_pure_node_info() {
-  ndvrsn="$(nvm current)"
-	preprompt+=("%F{magenta}$ndvrsn")
+	if [[ -f .nvmrc && -r .nvmrc ]]; then
+		local ndvrsn=`node --version`
+		preprompt+=("%F{magenta}$ndvrsn")
+  fi
 }
 
 prompt_pure_super_git_status() {
@@ -808,6 +810,7 @@ prompt_pure_setup() {
 	prompt_pure_pieces=(
 		prompt_pure_short_pwd
 		prompt_pure_ruby_info
+		prompt_pure_node_info
 		prompt_pure_render_vcs
 		prompt_pure_render_hostname
 		prompt_pure_render_exec_time
