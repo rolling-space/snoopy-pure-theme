@@ -1,0 +1,9 @@
+{
+  "name": "snoopy-pure-theme",
+  "description": "snoopy-pure-theme related",
+  "author": "rolling-space <https://github.com/rolling-space",
+  "repository": "https://github.com/rolling-space/snoopy-pure-theme.git",
+  "type": "theme",
+  "bin": {"bin/gitstatus": "gitstatus"},
+  "share": {"pure.zsh": "prompt_snoopy_pure_setup", "async.zsh": "async"}
+}

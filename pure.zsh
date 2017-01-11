@@ -152,7 +152,7 @@ prompt_pure_node_info() {
 prompt_pure_super_git_status() {
 	unset __CURRENT_GIT_STATUS
 
-	_S_GIT_STATUS=`git status --porcelain --branch &> /dev/null | $__GIT_PROMPT_DIR/exe/gitstatus`
+	_S_GIT_STATUS=`git status --porcelain --branch &> /dev/null | gitstatus`
 
 	__CURRENT_GIT_STATUS=("${(@s: :)_S_GIT_STATUS}")
 	# GIT_BRANCH=$__CURRENT_GIT_STATUS[1]
