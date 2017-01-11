@@ -1,5 +1,16 @@
 # Pure
 
+This is a fork of a fork and we finally have dinner -- a delicious one!
+
+This has been hacked to use the `gitstatus` haskell executable which provides counts of the files affected as reported by git (staged, unstaged, changed, untracked etc).
+
+It also shows the `ruby` version (always) and the `node` version (if `.nvmrc` exists in the current dir)
+
+This is a customized edition and most possibly contain infoirmation tailored to my `zsh` configuration -- I use [`zulu`](https://github.com/zulu-zsh/zulu) -- and you have its index file included here.
+
+You may have realised: Yes it is a WIP
+
+
 > Pretty, minimal and fast ZSH prompt
 
 This is a fork of [sindresorhus/pure](https://github.com/sindresorhus/pure), which aims towards:
