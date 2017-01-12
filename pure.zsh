@@ -33,13 +33,15 @@ PURE_PROMPT_SYMBOL='❯'
 function {
   local LC_ALL="" LC_CTYPE="en_US.UTF-8"
   # SEGMENT_SEPARATOR="\ue0b0"
-  SEGMENT_SEPARATOR=" ❯❯"
+  SEGMENT_SEPARATOR=" ❯"
   PLUSMINUS="\u00b1"
   BRANCH="\ue0a0"
   DETACHED="\u27a6"
   CROSS="\u2719"
   LIGHTNING="\u26a1"
   GEAR="\u2733"
+  RUBY_PR_SMBL="\u262f"
+  LOCAL_DIR_HISTORY_SMBL="\u25c9"
 }
 
 prompt_pure_human_time_to_var() {
@@ -139,13 +141,22 @@ prompt_pure_short_pwd() {
 
 prompt_pure_ruby_info() {
   rbvrsn="$(rbenv version-name)"
-	preprompt+=("%F{green}$rbvrsn")
+	preprompt+=("%F{magenta}${RUBY_PR_SMBL} $rbvrsn")
 }
 
 prompt_pure_node_info() {
 	if [[ -f .nvmrc && -r .nvmrc ]]; then
-		local ndvrsn=`node --version`
-		preprompt+=("%F{magenta}$ndvrsn")
+		local ndvrsn="$(nvm current)"
+		preprompt+=("%F{green}⬡ $ndvrsn")
+  fi
+}
+
+prompt_pure_render_local_dir_history() {
+  if [[ $LOCAL_DIR_HISTORY == 1 ]]; then
+    preprompt+=("%F{blue}${LOCAL_DIR_HISTORY_SMBL}")
+  else
+    preprompt+=("%F{146}${LOCAL_DIR_HISTORY_SMBL}")
+
   fi
 }
 
@@ -155,7 +166,7 @@ prompt_pure_super_git_status() {
 	_S_GIT_STATUS=`git status --porcelain --branch &> /dev/null | gitstatus`
 
 	__CURRENT_GIT_STATUS=("${(@s: :)_S_GIT_STATUS}")
-	# GIT_BRANCH=$__CURRENT_GIT_STATUS[1]
+	prompt_pure_vcs[sgbranch]=$__CURRENT_GIT_STATUS[1]
 	prompt_pure_vcs[sgahead]=$__CURRENT_GIT_STATUS[2]
 	prompt_pure_vcs[sgbehind]=$__CURRENT_GIT_STATUS[3]
 	prompt_pure_vcs[sgstaged]=$__CURRENT_GIT_STATUS[4]
@@ -206,18 +217,18 @@ prompt_pure_render_vcs() {
 		# branch and action
 		pp=""
 		[[ -n ${prompt_pure_vcs[action]} ]]  && pp+="${prompt_pure_vcs[action]}: "
-		[[ -n ${+prompt_pure_vcs[branch]} ]] && pp+="${BRANCH} ${prompt_pure_vcs[branch]}"
+		[[ -n ${+prompt_pure_vcs[branch]} ]] && pp+="${BRANCH} %F{130}${prompt_pure_vcs[sgbranch]}"
 
 		# worktree information (appended)
 		if (( ${prompt_pure_vcs[worktree]} )); then
-			pp+=${SEGMENT_SEPARATOR}
+			pp+="%f${SEGMENT_SEPARATOR}"
 			(( ${prompt_pure_vcs[untracked]} )) && pp+=${PURE_GIT_UNTRACKED:-'…'}
 			(( ${prompt_pure_vcs[sguntracked]} )) && pp+=${prompt_pure_vcs[sguntracked]}
 			(( ${prompt_pure_vcs[dirty]} ))     && pp+="%F{red}${PURE_GIT_DIRTY:-${GEAR}}"
 			(( ${prompt_pure_vcs[sgchanged]} )) && pp+=${prompt_pure_vcs[sgchanged]}
 			(( ${prompt_pure_vcs[staged]} ))    && pp+="%F{green}${PURE_GIT_STAGED:-${CROSS}}"
 			(( ${prompt_pure_vcs[sgstaged]} )) && pp+=${prompt_pure_vcs[sgstaged]}
-			(( ${prompt_pure_vcs[unmerged]} ))  && pp+="${reset_color}${PURE_GIT_UNMERGED:-'!'}"
+			(( ${prompt_pure_vcs[unmerged]} ))  && pp+="%f${PURE_GIT_UNMERGED:-'!'}"
 
 		elif ! (( ${+prompt_pure_vcs[worktree]} )); then
 
@@ -802,17 +813,19 @@ prompt_pure_setup() {
 	# privileged: bright white (base03 = 15)
 	# unprivileged: highlight (base1 = 14)
 	# failed command: red
+
 	PROMPT="%(?.%(!.%F{15}.%F{14}).%F{red})${PURE_PROMPT_SYMBOL:-%(!.#.\$)}%f "
 
 	# construct the array of prompt rendering callbacks
 	# a prompt rendering callback should append to the preprompt=() array
 	# declared in a parent scope
 	prompt_pure_pieces=(
+    prompt_pure_render_local_dir_history
+    prompt_pure_render_hostname
 		prompt_pure_short_pwd
 		prompt_pure_ruby_info
 		prompt_pure_node_info
 		prompt_pure_render_vcs
-		prompt_pure_render_hostname
 		prompt_pure_render_exec_time
 	)
 
