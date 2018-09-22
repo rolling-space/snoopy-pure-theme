@@ -42,6 +42,10 @@ function {
   GEAR="\u2733"
   RUBY_PR_SMBL="\u262f"
   LOCAL_DIR_HISTORY_SMBL="\u25c9"
+  GLOBAL_DIR_HISTORY_SMBL="\u25c9"
+  RUBY_VERSION_GEMSET_SMBL="•"
+  JRC_ACTIVE_SMBL="\db9e"
+  JRC_ACTIVE_SMBL_ALT="۞"
 }
 
 prompt_pure_human_time_to_var() {
@@ -141,7 +145,27 @@ prompt_pure_short_pwd() {
 
 prompt_pure_ruby_info() {
   rbvrsn="$(rbenv version-name)"
-	preprompt+=("%F{magenta}${RUBY_PR_SMBL} $rbvrsn")
+  # rbgmst="$(rbenv-gemset active 2>/dev/null)"
+  # if [ -n "$rbgmst" ]; then
+    # gemset_prompt="%F{229}${RUBY_VERSION_GEMSET_SMBL}%F{magenta}$rbgmst"
+    # preprompt+=("%F{magenta}${RUBY_PR_SMBL} $rbvrsn$gemset_prompt")
+  # else
+    # gemset_prompt="%F{064}${RUBY_VERSION_GEMSET_SMBL}%F{064}OFF"
+    # preprompt+=("%F{magenta}${RUBY_PR_SMBL} $rbvrsn$gemset_prompt")
+  # fi
+  preprompt+=("%F{magenta}${RUBY_PR_SMBL} $rbvrsn")
+}
+
+prompt_pure_jrc_info() {
+  if [[ -a .jrc.active ]]; then
+    local jrcactv="$(cat .jrc.active)"
+    # local jrcactv="${JIRA_ISSUE}"
+    preprompt+=("%F{yellow}${JRC_ACTIVE_SMBL_ALT}$jrcactv${JRC_ACTIVE_SMBL_ALT}")
+  fi
+	if [[ -a .jrc.epic.active ]]; then
+	  local jrcepicactv="$(cat .jrc.epic.active)"
+		preprompt+=("%F{blue}${JRC_ACTIVE_SMBL_ALT}$jrcepicactv${JRC_ACTIVE_SMBL_ALT}")
+	fi
 }
 
 prompt_pure_node_info() {
@@ -825,6 +849,7 @@ prompt_pure_setup() {
 		prompt_pure_short_pwd
 		prompt_pure_ruby_info
 		prompt_pure_node_info
+    prompt_pure_jrc_info
 		prompt_pure_render_vcs
 		prompt_pure_render_exec_time
 	)
